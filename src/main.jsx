@@ -9,7 +9,11 @@ function jsonHeaders() {
 }
 
 async function apiFetch(url, options = {}) {
-  const response = await fetch(url, options);
+  const headers = { ...(options.headers || {}) };
+  const demoRole = localStorage.getItem('instacloudRole');
+  if (demoRole) headers['x-demo-role'] = demoRole;
+
+  const response = await fetch(url, { ...options, headers });
   const text = await response.text();
   let data = null;
   try {
@@ -35,14 +39,18 @@ function toBase64(file) {
 }
 
 function AuthButtons() {
-  const postLogin = encodeURIComponent('/');
+  const demoLogin = (role) => {
+    localStorage.setItem('instacloudRole', role);
+    window.location.href = '/';
+  };
+
   return (
     <div className="login-panel">
       <h2>Sign in to InstaCloud</h2>
-      <p>Viewer accounts can search, view, comment and rate photos. Creator accounts can also upload photos.</p>
+      <p>Choose a coursework demo role. Consumer accounts can browse, search, comment and rate. Creator accounts can also upload photos.</p>
       <div className="login-actions">
-        <a className="primary-button" href={`/.auth/login/github?post_login_redirect_uri=${postLogin}`}>Sign in with GitHub</a>
-        <a className="secondary-button" href={`/.auth/login/aad?post_login_redirect_uri=${postLogin}`}>Sign in with Microsoft</a>
+        <button className="primary-button" onClick={() => demoLogin('creator')}>Login as Creator</button>
+        <button className="secondary-button" onClick={() => demoLogin('viewer')}>Login as Consumer</button>
       </div>
     </div>
   );
@@ -72,7 +80,7 @@ function Header({ user, currentPage, setCurrentPage }) {
               <strong>{user.displayName || 'Signed-in user'}</strong>
               <small>{isCreator ? 'Creator + Viewer' : 'Viewer only'}</small>
             </span>
-            <a className="logout" href="/.auth/logout?post_logout_redirect_uri=/">Logout</a>
+            <a className="logout" href="/" onClick={() => localStorage.removeItem('instacloudRole')}>Logout</a>
           </>
         ) : <a className="primary-button compact" href="/.auth/login/github">Login</a>}
       </div>
@@ -343,7 +351,7 @@ function App() {
       ) : (
         <Feed posts={posts} onSearch={onSearch} search={search} loading={loading} refresh={() => loadPosts(search)} onRate={onRate} onComment={onComment} />
       )}
-      <footer className="footer">React + Azure Static Web Apps + Azure Functions + Blob Storage + Cosmos DB</footer>
+      <footer className="footer">React + Node.js on Azure App Service + Blob Storage + Cosmos DB</footer>
     </>
   );
 }

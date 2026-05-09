@@ -94,6 +94,20 @@ function creatorList() {
 }
 
 function getClientPrincipal(req) {
+  // Coursework demo login: allows the React app to choose creator or consumer
+  // without needing Azure Authentication identity provider setup.
+  const demoLoginEnabled = String(process.env.DEMO_LOGIN || '').toLowerCase() === 'true';
+  const requestedDemoRole = String(req.get('x-demo-role') || '').toLowerCase();
+
+  if (demoLoginEnabled && (requestedDemoRole === 'viewer' || requestedDemoRole === 'creator')) {
+    return {
+      userId: `demo-${requestedDemoRole}`,
+      userDetails: requestedDemoRole === 'creator' ? 'Demo Creator' : 'Demo Consumer',
+      identityProvider: 'coursework-demo-login',
+      userRoles: requestedDemoRole === 'creator' ? ['authenticated', 'creator'] : ['authenticated']
+    };
+  }
+
   const demoMode = String(process.env.DEMO_MODE || '').toLowerCase();
   if (demoMode === 'viewer' || demoMode === 'creator') {
     return {
